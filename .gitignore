@@ -24,3 +24,6 @@ poetry.lock
 
 # PyCharm
 .idea
+
+# Produces files
+data/

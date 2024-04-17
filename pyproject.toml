@@ -7,6 +7,11 @@ requires-python = ">=3.11"
 dependencies = [
   "absl-py",
   "numpy",
+  "jaxlib",
+  "jax",
+  "flax",
+  "h5py",
+  "optax"
 ]
 
 dynamic = ["version"]
