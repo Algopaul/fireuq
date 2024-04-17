@@ -72,24 +72,41 @@ $(dnn_predictions_full_range_many): data/predictions/dnn_new_setup_many_time_%: 
 dnn_predictions: $(dnn_predictions_filtered_range_many) $(dnn_predictions_full_range) $(dnn_predictions_full_range_many) $(dnn_predictions_filtered_range)
 
 mfmcs = $(addsuffix _mfmc_data.txt,$(addprefix data/mfmc/dnn_new_setup_,$(time_ids)))
+mfmcs_sub = $(addsuffix _mfmc_data.txt,$(addprefix data/mfmc/sub_dnn_new_setup_,$(time_ids)))
 mfmcs_filtered = $(addsuffix _mfmc_data.txt,$(addprefix data/mfmc/dnn_filtered_setup_,$(time_ids)))
+mfmcs_filtered_sub = $(addsuffix _mfmc_data.txt,$(addprefix data/mfmc/sub_dnn_filtered_setup_,$(time_ids)))
+
+MFMC = python fireuq/mfmc/mfmc_analysis.py\
+		--cost_large=1536.0 \
+		--cost_small=1.0e-5\
+		--sample_file_large=./data/predictions/$(1)\
+		--sample_file_small=./data/predictions/$(2)\
+		--sample_file_small_many=./data/predictions/$(3)\
+		--outfile=./data/mfmc/$(4)
+
+interest_budgets = 5000.0 10000.0 15000.0 20000.0 25000.0 30000.0
+
+MFMC_sub = python fireuq/mfmc/mfmc_analysis.py\
+		--cost_large=1536.0 \
+		--cost_small=1.0e-5\
+		--sample_file_large=./data/predictions/$(1)\
+		--sample_file_small=./data/predictions/$(2)\
+		--sample_file_small_many=./data/predictions/$(3)\
+		--outfile=./data/mfmc/sub_$(4)\
+		$(addprefix --budgets ,$(interest_budgets))
+
 
 $(mfmcs): data/mfmc/dnn_new_setup_%_mfmc_data.txt: ./data/predictions/large_scale_new_setup_time_% ./data/predictions/dnn_new_setup_time_% ./data/predictions/dnn_new_setup_many_time_% | data/mfmc
-	python fireuq/mfmc/mfmc_analysis.py\
-		--cost_large=1536.0 \
-		--cost_small=1.0e-5\
-		--sample_file_large=./data/predictions/large_scale_new_setup_time_${*}\
-		--sample_file_small=./data/predictions/dnn_new_setup_time_${*}\
-		--sample_file_small_many=./data/predictions/dnn_new_setup_many_time_${*}\
-		--outfile=./data/mfmc/dnn_new_setup_${*}
+	$(call MFMC,large_scale_new_setup_time_${*},dnn_new_setup_time_${*},dnn_new_setup_many_time_${*},dnn_new_setup_${*})
+
+$(mfmcs_sub): data/mfmc/sub_dnn_new_setup_%_mfmc_data.txt: ./data/predictions/large_scale_new_setup_time_% ./data/predictions/dnn_new_setup_time_% ./data/predictions/dnn_new_setup_many_time_% | data/mfmc
+	$(call MFMC_sub,large_scale_new_setup_time_${*},dnn_new_setup_time_${*},dnn_new_setup_many_time_${*},dnn_new_setup_${*})
 
 $(mfmcs_filtered): data/mfmc/dnn_filtered_setup_%_mfmc_data.txt: ./data/predictions/large_scale_filtered_setup_time_% ./data/predictions/dnn_filtered_setup_time_% ./data/predictions/dnn_filtered_setup_many_time_% | data/mfmc
-	python fireuq/mfmc/mfmc_analysis.py\
-		--cost_large=1536.0 \
-		--cost_small=1.0e-5\
-		--sample_file_large=./data/predictions/large_scale_filtered_setup_time_${*}\
-		--sample_file_small=./data/predictions/dnn_filtered_setup_time_${*}\
-		--sample_file_small_many=./data/predictions/dnn_filtered_setup_many_time_${*}\
-		--outfile=./data/mfmc/dnn_filtered_setup_${*}
+	$(call MFMC,large_scale_filtered_setup_time_${*},dnn_filtered_setup_time_${*},dnn_filtered_setup_many_time_${*},dnn_filtered_setup_${*})
 
-mfmc_data: $(mfmcs) $(mfmcs_filtered)
+$(mfmcs_filtered_sub): data/mfmc/sub_dnn_filtered_setup_%_mfmc_data.txt: ./data/predictions/large_scale_filtered_setup_time_% ./data/predictions/dnn_filtered_setup_time_% ./data/predictions/dnn_filtered_setup_many_time_% | data/mfmc
+	$(call MFMC_sub,large_scale_filtered_setup_time_${*},dnn_filtered_setup_time_${*},dnn_filtered_setup_many_time_${*},dnn_filtered_setup_${*})
+
+
+mfmc_data: $(mfmcs) $(mfmcs_filtered) $(mfmcs_sub) $(mfmcs_filtered_sub)
