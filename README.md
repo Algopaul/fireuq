@@ -1,1 +1,1 @@
-# fireuq -- Multifidelity Monte Carlo estimation of wildfires
+# fireuq: Multifidelity Monte Carlo estimation of wildfires
