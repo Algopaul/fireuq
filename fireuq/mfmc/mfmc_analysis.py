@@ -97,7 +97,7 @@ def main(_):
       [mc_estimate(ls_results, budget, bpr_large_scale) for budget in budgets])
   mc_small = np.asarray(
       [mc_estimate(sm_results, budget, bpr_small_scale) for budget in budgets])
-  sigma_1 = np.var(ls_results)
+  sigma_1 = np.var(ls_results,ddof=1)
 
   # mfmc
   cor_coeff, alpha, w, r = mfmc_params(ls_results, sm_results, bpr_large_scale,

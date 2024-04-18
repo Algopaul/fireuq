@@ -3,7 +3,7 @@ from absl import flags, app
 
 flags.DEFINE_multi_string('predictions', [], 'The predictions to compare')
 flags.DEFINE_multi_integer('times', [], 'The time ids at which to compare')
-flags.DEFINE_string('outfile', '', 'The output file to write the results')
+flags.DEFINE_string('corr_outfile', '', 'The output file to write the results')
 
 
 def remove_nans(x, y):
