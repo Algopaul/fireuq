@@ -1,5 +1,7 @@
 all: mfmc_data
 
+.PHONY: all download train_dnns dnn_predictions mfmc_data
+
 DIRS = data data/dnns data/predictions data/mfmc
 
 $(DIRS): %:
@@ -110,3 +112,11 @@ $(mfmcs_filtered_sub): data/mfmc/sub_dnn_filtered_setup_%_mfmc_data.txt: ./data/
 
 
 mfmc_data: $(mfmcs) $(mfmcs_filtered) $(mfmcs_sub) $(mfmcs_filtered_sub)
+
+correlations:
+	python fireuq/mfmc/correlation_coeffs.py \
+		--predictions=data/predictions/large_scale_new_setup \
+		--predictions=data/predictions/small_scale_new_setup \
+		--predictions=data/predictions/dnn_new_setup\
+		$(addprefix --times=,$(time_ids)) \
+		--outfile test

@@ -6,19 +6,17 @@ import numpy as np
 
 _SCHEDULE_LEARNING_RATE = flags.DEFINE_bool(
     'schedule_learning_rate', True, 'Whether to use a learning_rate scheduler.')
-_START_LEARNING_RATE = flags.DEFINE_float(
-    'start_learning_rate', 1e-3, 'The base/initial learning rate')
-_END_LEARNING_RATE = flags.DEFINE_float(
-    'end_learning_rate', 1e-8, 'The final learning rate')
-_N_WARMUP_STEPS = flags.DEFINE_integer(
-    'n_warmup_steps', 50, 'The number of warmup steps')
+_START_LEARNING_RATE = flags.DEFINE_float('start_learning_rate', 1e-3,
+                                          'The base/initial learning rate')
+_END_LEARNING_RATE = flags.DEFINE_float('end_learning_rate', 1e-8,
+                                        'The final learning rate')
+_N_WARMUP_STEPS = flags.DEFINE_integer('n_warmup_steps', 50,
+                                       'The number of warmup steps')
 _N_OPTIMIZATION_STEPS = flags.DEFINE_integer(
     'n_optimization_steps', 100000, 'The number of optimization steps')
 _INITIALIZATION_LOSS_TOL = flags.DEFINE_float(
-    'initialization_loss_tol',
-    0.0,
+    'initialization_loss_tol', 0.0,
     'Breaks the optimization loop if loss is below this value.')
-
 
 TRAIN_LOSSES = []
 VAL_LOSSES = []
@@ -33,16 +31,16 @@ OPTIMIZER_DICT = {
 }
 
 
-def get_optimizer(optimizer_name, learning_rate) -> optax.GradientTransformation:
+def get_optimizer(optimizer_name,
+                  learning_rate) -> optax.GradientTransformation:
   opti_f = OPTIMIZER_DICT[optimizer_name]
   return opti_f(learning_rate=learning_rate)
 
 
 def standard_loss(param, x_train, dnn, y_train):
-  vmapped_dnn=jax.vmap(dnn.apply, in_axes=[None, 0])
+  vmapped_dnn = jax.vmap(dnn.apply, in_axes=[None, 0])
   return jax.numpy.mean(
-      jax.numpy.squeeze(vmapped_dnn(param, x_train)-y_train)**2
-      )
+      jax.numpy.squeeze(vmapped_dnn(param, x_train) - y_train)**2)
 
 
 def fit_dnn(
@@ -67,8 +65,7 @@ def fit_dnn(
         warmup_steps=_N_WARMUP_STEPS.value,
         peak_value=_START_LEARNING_RATE.value,
         decay_steps=_N_OPTIMIZATION_STEPS.value,
-        end_value=_END_LEARNING_RATE.value
-    )
+        end_value=_END_LEARNING_RATE.value)
   optimizer = get_optimizer(optimizer_name, learning_rate)
   opt_state = optimizer.init(param_init)
 
@@ -104,10 +101,10 @@ def fit_dnn(
 
   return final_params, loss_value
 
+
 def collect_train_log():
   iters = np.stack(ITERS)
   train_losses = np.stack(TRAIN_LOSSES)
   val_losses = np.stack(VAL_LOSSES)
   A = np.stack((iters, train_losses, val_losses))
   return A
-
