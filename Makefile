@@ -117,10 +117,23 @@ corr_predictions = $(addprefix data/predictions/large_scale_new_setup_time_,$(ti
 	$(addprefix data/predictions/small_scale_new_setup_time_,$(time_ids)) \
 	$(addprefix data/predictions/dnn_new_setup_time_,$(time_ids))
 
+
 data/corr_coeffs.txt: $(corr_predictions) | data
 	python fireuq/mfmc/correlation_coeffs.py \
 		--predictions=data/predictions/large_scale_new_setup \
 		--predictions=data/predictions/small_scale_new_setup \
 		--predictions=data/predictions/dnn_new_setup\
 		$(addprefix --times=,$(time_ids)) \
-		--outfile data/corr_coeffs.txt
+		--corr_outfile=data/corr_coeffs.txt
+
+corr_filtered_predictions = $(addprefix data/predictions/large_scale_filtered_setup_time_,$(time_ids)) \
+	$(addprefix data/predictions/small_scale_filtered_setup_time_,$(time_ids)) \
+	$(addprefix data/predictions/dnn_filtered_setup_time_,$(time_ids))
+
+data/corr_coeffs_filtered.txt: $(corr_filtered_predictions) | data
+	python fireuq/mfmc/correlation_coeffs.py \
+		--predictions=data/predictions/large_scale_filtered_setup \
+		--predictions=data/predictions/small_scale_filtered_setup \
+		--predictions=data/predictions/dnn_filtered_setup\
+		$(addprefix --times=,$(time_ids)) \
+		--corr_outfile=data/corr_coeffs_filtered.txt
