@@ -21,13 +21,11 @@ $(dnns): data/dnns/dnn_bytes_time_%: | data/dnns
 		--outdir=data/dnns/ \
 		--outname=time_${*}
 
-large_scale_predictions = $(addprefix data/predictions/large_scale_new_setup_time_,$(time_ids))
-large_scale_filtered_predictions = $(addprefix data/predictions/large_scale_filtered_setup_time_,$(time_ids))
-small_scale_predictions = $(addprefix data/predictions/small_scale_new_setup_time_,$(time_ids))
-small_scale_filtered_predictions = $(addprefix data/predictions/small_scale_filtered_setup_time_,$(time_ids))
-small_scale_many_predictions = $(addprefix data/predictions/small_scale_new_setup_many_time_,$(time_ids))
+prediction = $(foreach setup,$(2),$(addprefix data/predictions/$(1)_$(setup)_time_,$(time_ids)))
+large_scale_predictions = $(call prediction,large_scale,new_setup filtered_setup)
+small_scale_predictions = $(call prediction,small_scale,new_setup filtered_setup new_setup_many)
 
-downloadable = $(large_scale_predictions) $(small_scale_predictions) $(small_scale_many_predictions) $(large_scale_filtered_predictions) $(small_scale_filtered_predictions)
+downloadable = $(large_scale_predictions) $(small_scale_predictions) $(small_scale_many_predictions)
 
 $(downloadable): data/predictions/%:
 	gsutil -m cp -r gs://tubbs-scale-fire-simulations/predictions/${*} data/predictions/${*}
@@ -49,10 +47,10 @@ data/new_setup_many.npy: %:
 	gsutil -m cp -r gs://tubbs-scale-fire-simulations/new_setup_500000_1.npy ${*}
 
 
-dnn_predictions_full_range = $(addprefix data/predictions/dnn_new_setup_time_,$(time_ids))
-dnn_predictions_full_range_many = $(addprefix data/predictions/dnn_new_setup_many_time_,$(time_ids))
-dnn_predictions_filtered_range = $(addprefix data/predictions/dnn_filtered_setup_time_,$(time_ids))
-dnn_predictions_filtered_range_many = $(addprefix data/predictions/dnn_filtered_setup_many_time_,$(time_ids))
+dnn_predictions_full_range = $(call prediction,dnn,new_setup)
+dnn_predictions_full_range_many = $(call prediction,dnn,new_setup_many)
+dnn_predictions_filtered_range = $(call prediction,dnn,filtered_setup)
+dnn_predictions_filtered_range_many = $(call prediction,dnn,filtered_setup_many)
 
 EVAL_DNN = python fireuq/dnn/evaluate_dnn.py \
 		--outdir=data/dnns/ \
@@ -75,10 +73,13 @@ $(dnn_predictions_full_range_many): data/predictions/dnn_new_setup_many_time_%: 
 
 dnn_predictions: $(dnn_predictions_filtered_range_many) $(dnn_predictions_full_range) $(dnn_predictions_full_range_many) $(dnn_predictions_filtered_range)
 
-mfmcs = $(addsuffix _mfmc_data.txt,$(addprefix data/mfmc/dnn_new_setup_,$(time_ids)))
-mfmcs_sub = $(addsuffix _mfmc_data.txt,$(addprefix data/mfmc/sub_dnn_new_setup_,$(time_ids)))
-mfmcs_filtered = $(addsuffix _mfmc_data.txt,$(addprefix data/mfmc/dnn_filtered_setup_,$(time_ids)))
-mfmcs_filtered_sub = $(addsuffix _mfmc_data.txt,$(addprefix data/mfmc/sub_dnn_filtered_setup_,$(time_ids)))
+
+mfmc = $(addsuffix _mfmc_data.txt,$(addprefix data/mfmc/$(1)_,$(time_ids)))
+
+mfmcs = $(call mfmc,dnn_new_setup)
+mfmcs_sub = $(call mfmc,sub_dnn_new_setup)
+mfmcs_filtered = $(call mfmc,dnn_filtered_setup)
+mfmcs_filtered_sub = $(call mfmc,sub_dnn_filtered_setup)
 
 MFMC = python fireuq/mfmc/mfmc_analysis.py\
 		--cost_large=1536.0 \
