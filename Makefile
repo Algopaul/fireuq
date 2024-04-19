@@ -24,13 +24,15 @@ $(dnns): data/dnns/dnn_bytes_time_%: | data/dnns
 large_scale_predictions = $(addprefix data/predictions/large_scale_new_setup_time_,$(time_ids))
 large_scale_filtered_predictions = $(addprefix data/predictions/large_scale_filtered_setup_time_,$(time_ids))
 small_scale_predictions = $(addprefix data/predictions/small_scale_new_setup_time_,$(time_ids))
+small_scale_filtered_predictions = $(addprefix data/predictions/small_scale_filtered_setup_time_,$(time_ids))
 small_scale_many_predictions = $(addprefix data/predictions/small_scale_new_setup_many_time_,$(time_ids))
 
-download: $(large_scale_predictions) $(small_scale_predictions) $(small_scale_many_predictions) $(large_scale_filtered_predictions)
+downloadable = $(large_scale_predictions) $(small_scale_predictions) $(small_scale_many_predictions) $(large_scale_filtered_predictions) $(small_scale_filtered_predictions)
 
-$(large_scale_predictions) $(small_scale_predictions) $(small_scale_many_predictions) $(large_scale_filtered_predictions): data/predictions/%:
+$(downloadable): data/predictions/%:
 	gsutil -m cp -r gs://tubbs-scale-fire-simulations/predictions/${*} data/predictions/${*}
 
+download: $(downloadable)
 
 data/filtered.npy: %:
 	gsutil -m cp -r gs://tubbs-scale-fire-simulations/filtered_setup .

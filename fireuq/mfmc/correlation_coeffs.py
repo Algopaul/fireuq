@@ -26,7 +26,7 @@ def load_result(prediction, time):
 def main(_):
   predictions = flags.FLAGS.predictions
   times = flags.FLAGS.times
-  outfile = flags.FLAGS.outfile
+  outfile = flags.FLAGS.corr_outfile
   results = []
   rhos = np.zeros((len(times), len(predictions) * (len(predictions) - 1) // 2))
   for i, prediction in enumerate(predictions):
