@@ -4,6 +4,14 @@ all: mfmc_data
 
 DIRS = data data/dnns data/predictions data/mfmc
 
+.venv:
+	python3.11 -m venv .venv
+
+install: pyproject.toml | .venv
+	.venv/bin/pip install -e .
+
+PYTHON = .venv/bin/python
+
 $(DIRS): %:
 	mkdir -p ${*}
 
@@ -16,7 +24,7 @@ dnns = $(addprefix data/dnns/dnn_bytes_time_,$(time_ids))
 train_dnns: $(dnns)
 
 $(dnns): data/dnns/dnn_bytes_time_%: | data/dnns
-	python fireuq/dnn/train_dnn.py \
+	$(PYTHON) fireuq/dnn/train_dnn.py \
 		--train_data=data/dnn_train_data/time_${*}\
 		--outdir=data/dnns/ \
 		--outname=time_${*}
@@ -34,7 +42,7 @@ download: $(downloadable)
 
 data/filtered.npy: %:
 	gsutil -m cp -r gs://tubbs-scale-fire-simulations/filtered_setup .
-	python -c "import numpy as np; A=np.loadtxt('filtered_setup',skiprows=1); np.save('${*}', A)"
+	$(PYTHON) -c "import numpy as np; A=np.loadtxt('filtered_setup',skiprows=1); np.save('${*}', A)"
 	rm filtered_setup
 
 data/filtered_many.npy: %:
@@ -52,7 +60,7 @@ dnn_predictions_full_range_many = $(call prediction,dnn,new_setup_many)
 dnn_predictions_filtered_range = $(call prediction,dnn,filtered_setup)
 dnn_predictions_filtered_range_many = $(call prediction,dnn,filtered_setup_many)
 
-EVAL_DNN = python fireuq/dnn/evaluate_dnn.py \
+EVAL_DNN = $(PYTHON) fireuq/dnn/evaluate_dnn.py \
 		--outdir=data/dnns/ \
 		--outname=time_$(1) \
 		--input_data=data/$(2).npy \
@@ -62,13 +70,13 @@ EVAL_DNN = python fireuq/dnn/evaluate_dnn.py \
 $(dnn_predictions_filtered_range): data/predictions/dnn_filtered_setup_time_%: data/filtered.npy ./fireuq/dnn/evaluate_dnn.py data/dnns/dnn_bytes_time_%
 	$(call EVAL_DNN,${*},filtered,dnn_filtered_setup)
 
-$(dnn_predictions_filtered_range_many): data/predictions/dnn_filtered_setup_many_time_%: data/filtered_many.npy ./fireuq/dnn/evaluate_dnn.py
+$(dnn_predictions_filtered_range_many): data/predictions/dnn_filtered_setup_many_time_%: data/filtered_many.npy ./fireuq/dnn/evaluate_dnn.py data/dnns/dnn_bytes_time_%
 	$(call EVAL_DNN,${*},filtered_many,dnn_filtered_setup_many)
 
-$(dnn_predictions_full_range): data/predictions/dnn_new_setup_time_%: data/new_setup.npy ./fireuq/dnn/evaluate_dnn.py
+$(dnn_predictions_full_range): data/predictions/dnn_new_setup_time_%: data/new_setup.npy ./fireuq/dnn/evaluate_dnn.py data/dnns/dnn_bytes_time_%
 	$(call EVAL_DNN,${*},new_setup,dnn_new_setup)
 
-$(dnn_predictions_full_range_many): data/predictions/dnn_new_setup_many_time_%: data/new_setup_many.npy ./fireuq/dnn/evaluate_dnn.py
+$(dnn_predictions_full_range_many): data/predictions/dnn_new_setup_many_time_%: data/new_setup_many.npy ./fireuq/dnn/evaluate_dnn.py data/dnns/dnn_bytes_time_%
 	$(call EVAL_DNN,${*},new_setup_many,dnn_new_setup_many)
 
 dnn_predictions: $(dnn_predictions_filtered_range_many) $(dnn_predictions_full_range) $(dnn_predictions_full_range_many) $(dnn_predictions_filtered_range)
@@ -81,7 +89,7 @@ mfmcs_sub = $(call mfmc,sub_dnn_new_setup)
 mfmcs_filtered = $(call mfmc,dnn_filtered_setup)
 mfmcs_filtered_sub = $(call mfmc,sub_dnn_filtered_setup)
 
-MFMC = python fireuq/mfmc/mfmc_analysis.py\
+MFMC = $(PYTHON) fireuq/mfmc/mfmc_analysis.py\
 		--cost_large=1536.0 \
 		--cost_small=1.0e-5\
 		--sample_file_large=./data/predictions/$(1)\
@@ -91,7 +99,7 @@ MFMC = python fireuq/mfmc/mfmc_analysis.py\
 
 interest_budgets = 5000.0 10000.0 15000.0 20000.0 25000.0 30000.0
 
-MFMC_sub = python fireuq/mfmc/mfmc_analysis.py\
+MFMC_sub = $(PYTHON) fireuq/mfmc/mfmc_analysis.py\
 		--cost_large=1536.0 \
 		--cost_small=1.0e-5\
 		--sample_file_large=./data/predictions/$(1)\
@@ -122,7 +130,7 @@ corr_predictions = $(addprefix data/predictions/large_scale_new_setup_time_,$(ti
 
 
 data/corr_coeffs.txt: $(corr_predictions) | data
-	python fireuq/mfmc/correlation_coeffs.py \
+	$(PYTHON) fireuq/mfmc/correlation_coeffs.py \
 		--predictions=data/predictions/large_scale_new_setup \
 		--predictions=data/predictions/small_scale_new_setup \
 		--predictions=data/predictions/dnn_new_setup\
@@ -134,7 +142,7 @@ corr_filtered_predictions = $(addprefix data/predictions/large_scale_filtered_se
 	$(addprefix data/predictions/dnn_filtered_setup_time_,$(time_ids))
 
 data/corr_coeffs_filtered.txt: $(corr_filtered_predictions) | data
-	python fireuq/mfmc/correlation_coeffs.py \
+	$(PYTHON) fireuq/mfmc/correlation_coeffs.py \
 		--predictions=data/predictions/large_scale_filtered_setup \
 		--predictions=data/predictions/small_scale_filtered_setup \
 		--predictions=data/predictions/dnn_filtered_setup\
