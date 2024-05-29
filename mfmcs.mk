@@ -15,7 +15,7 @@ fn_mfmc = $(PYTHON) fireuq/mfmc/mfmc_analysis.py\
 
 
 define fn_mfmc_data
-data/mfmc/dnn_$(1)_$(2)_mfmc_data.txt: ./data/physics_predictions/large_scale_$(1)_time_$(2) ./data/predictions/dnn_$(1)_time_$(2) data/predictions/dnn_$(1)_many_time_$(2) | data/mfmc
+data/mfmc/dnn_$(1)_$(2)_mfmc_data.txt: ./data/physics_predictions/large_scale_$(1)_time_$(2) ./data/predictions/dnn_$(1)_time_$(2) data/predictions/dnn_$(1)_many_time_$(2) | data/mfmc .venv
 	$(call fn_mfmc,large_scale_$(1)_time_$(2),$(1)_time_$(2),$(1)_many_time_$(2),dnn_$(1)_$(2))
 endef
 
@@ -39,7 +39,7 @@ fn_mfmc_subsampled = $(PYTHON) fireuq/mfmc/mfmc_analysis.py\
 		$(addprefix --budgets ,$(budgets_of_interest))
 
 define fn_mfmc_subsampled_data
-data/mfmc/sub_dnn_$(1)_$(2)_mfmc_data.txt: ./data/physics_predictions/large_scale_$(1)_time_$(2) ./data/predictions/dnn_$(1)_time_$(2) data/predictions/dnn_$(1)_many_time_$(2) | data/mfmc
+data/mfmc/sub_dnn_$(1)_$(2)_mfmc_data.txt: ./data/physics_predictions/large_scale_$(1)_time_$(2) ./data/predictions/dnn_$(1)_time_$(2) data/predictions/dnn_$(1)_many_time_$(2) | data/mfmc .venv
 	$(call fn_mfmc_subsampled,large_scale_$(1)_time_$(2),$(1)_time_$(2),$(1)_many_time_$(2),dnn_$(1)_$(2))
 endef
 
