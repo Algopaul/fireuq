@@ -45,4 +45,4 @@ setups = new_setup new_setup_many filtered_setup filtered_setup_many
 
 $(foreach setup,$(setups),$(foreach time_id,$(time_indices),$(eval $(call fn_dnn_eval,$(time_id),$(setup)))))
 
-all: data/corr_coeffs.txt data/corr_coeffs_filtered.txt $(mfmc_estimates)
+all: data/corr_coeffs.txt data/corr_coeffs_filtered.txt mfmc_estimates
