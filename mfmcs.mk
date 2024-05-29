@@ -1,4 +1,4 @@
-fn_mfmc_result = $(addsuffix _mfmc_data.txt,$(addprefix data/mfmc/$(1)_,$(time_ids)))
+fn_mfmc_result = $(addsuffix _mfmc_data.txt,$(addprefix data/mfmc/dnn_$(1)_,$(time_indices)))
 
 mfmcs = $(call fn_mfmc_result,dnn_new_setup)
 mfmcs_filtered = $(call fn_mfmc_result,dnn_filtered_setup)
@@ -15,13 +15,14 @@ fn_mfmc = $(PYTHON) fireuq/mfmc/mfmc_analysis.py\
 
 
 define fn_mfmc_data
-data/mfmc/dnn_$(1)_$(2)_mfmc_data.txt: ./data/physics_predictions/large_scale_$(1)_time_$(2) ./data/predictions/dnn_$(1)_time_$(2) | data/mfmc
+data/mfmc/dnn_$(1)_$(2)_mfmc_data.txt: ./data/physics_predictions/large_scale_$(1)_time_$(2) ./data/predictions/dnn_$(1)_time_$(2) data/predictions/dnn_$(1)_many_time_$(2) | data/mfmc
 	$(call fn_mfmc,large_scale_$(1)_time_$(2),$(1)_time_$(2),$(1)_many_time_$(2),dnn_$(1)_$(2))
 endef
 
 mfmc_setups = filtered_setup new_setup
 
-mfmcs=$(foreach setup,$(mfmc_setups),$(foreach time_id,$(time_indices),$(eval $(call fn_mfmc_data,$(setup),$(time_id)))))
+$(foreach setup,$(mfmc_setups),$(foreach time_id,$(time_indices),$(eval $(call fn_mfmc_data,$(setup),$(time_id)))))
+mfmc_datafiles=$(foreach setup,$(mfmc_setups),$(call fn_mfmc_result,$(setup)))
 
 
 # For the bar charts, we need to subsample the DNN predictions
@@ -44,4 +45,5 @@ endef
 
 subsampled_mfmcs = $(foreach setup,$(setups),$(foreach time_id,$(time_indices),$(eval $(call fn_mfmc_subsampled_data,$(setup),$(time_id)))))
 
-mfmc_estimates: $(mfmcs) $(subsampled_mfmcs)
+mfmc_estimates: $(mfmc_datafiles)
+	echo $(mfmc_datafiles)

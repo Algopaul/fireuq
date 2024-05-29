@@ -1,4 +1,4 @@
-all: mfmc_data
+default: all
 
 time_indices = $(shell seq 1 11)
 
@@ -7,7 +7,6 @@ include download.mk
 include mfmcs.mk
 include correlations.mk
 
-.PHONY: all download train_dnns dnn_predictions mfmc_data
 
 DIRS = data data/dnns data/predictions data/mfmc
 
@@ -19,7 +18,7 @@ dnns = $(addprefix data/dnns/dnn_bytes_time_,$(time_indices))
 
 train_dnns: $(dnns)
 
-$(dnns): data/dnns/dnn_bytes_time_%: data/dnn_train_data | data/dnns
+$(dnns): data/dnns/dnn_bytes_time_%: data/dnn_train_data | data/dnns .venv
 	$(PYTHON) fireuq/dnn/train_dnn.py \
 		--train_data=data/dnn_train_data/time_${*}\
 		--outdir=data/dnns/ \
@@ -29,7 +28,7 @@ $(dnns): data/dnns/dnn_bytes_time_%: data/dnn_train_data | data/dnns
 fn_eval_dnn = $(PYTHON) fireuq/dnn/evaluate_dnn.py \
 		--outdir=data/dnns/ \
 		--outname=time_$(1) \
-		--input_data=data/$(2).npy \
+		--input_data=data/simulation_setups/$(2).npy \
 		--eval_outname=$(3)_time_$(1) \
 		--eval_outdir=data/predictions/
 
@@ -38,19 +37,12 @@ fn_eval_dnn = $(PYTHON) fireuq/dnn/evaluate_dnn.py \
 # $(1) is the time index
 # $(2) is the setup
 define fn_dnn_eval
-dnn_$(2)_$(1): data/$(2).npy ./fireuq/dnn/evaluate_dnn.py data/dnns/dnn_bytes_time_$(1)
+data/predictions/dnn_$(2)_time_$(1): data/simulation_setups/$(2).npy ./fireuq/dnn/evaluate_dnn.py data/dnns/dnn_bytes_time_$(1) | .venv data/predictions
 	$(call fn_eval_dnn,$(1),$(2),dnn_$(2))
 endef
 
-setups = new_setup new_setup_many filtered filtered_many
+setups = new_setup new_setup_many filtered_setup filtered_setup_many
 
-$(foreach setup,$(setups),$(foreach time_id,$(time_indices),$(eval $(call fn_dnn_eval,$(setup),$(time_id)))))
+$(foreach setup,$(setups),$(foreach time_id,$(time_indices),$(eval $(call fn_dnn_eval,$(time_id),$(setup)))))
 
-fn_dnn_prediction=data/predictions/dnn_$(1)_time_$(2)
-
-dnn_predictions=$(foreach setup,$(setups),$(addprefix $(call fn_dnn_prediction,$(setup),),$(time_indices)))
-
-
-
-
-
+all: data/corr_coeffs.txt data/corr_coeffs_filtered.txt $(mfmc_estimates)
