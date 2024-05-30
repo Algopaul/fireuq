@@ -1,5 +1,5 @@
 import numpy as np
-from absl import flags, app
+from absl import flags, app, logging
 from fireuq.mfmc.correlation_coeffs import variances_correlation, remove_nans
 
 COST_LARGE = flags.DEFINE_float(
@@ -15,6 +15,10 @@ SAMPLE_FILE_SMALL_MANY = flags.DEFINE_string(
 OUTFILE = flags.DEFINE_string('outfile', '',
                               'File base for solving the results')
 BUDGETS = flags.DEFINE_multi_float('budgets', [], 'The budgets to use')
+
+ADDITIONAL_OUTPUTS = flags.DEFINE_boolean(
+    'additional_outputs', False,
+    'Whether to output additional files for debugging')
 
 
 def load_results():
@@ -65,6 +69,8 @@ def mfmc_estimate(budget, x_ls, x_sm, x_new_sm, alpha, w, r):
     n_sm = 0
     y1m1 = mean_na_ignore(x_ls[:n_ls])
     return y1m1, n_ls, n_sm
+  if n_sm > len(x_new_sm):
+    logging.warning('Not enough samples. Requested %d, have %d', n_sm, len(x_new_sm))
   y1m1 = mean_na_ignore(x_ls[:n_ls])
   y2m1 = mean_na_ignore(x_sm[:n_ls])
   y2m2 = mean_na_ignore(np.hstack((x_sm[:n_ls], x_new_sm[:n_sm])))
@@ -89,7 +95,7 @@ def main(_):
   bpr_large_scale = COST_LARGE.value
   bpr_small_scale = COST_SMALL.value
   if len(BUDGETS.value) == 0:
-    budgets = np.linspace(bpr_large_scale, 30000, 100)
+    budgets = np.linspace(bpr_large_scale, 50000, 100)
   else:
     budgets = BUDGETS.value
 
@@ -121,21 +127,22 @@ def main(_):
       comments='',
       fmt='%.6e',
   )
-  np.savetxt(
-      OUTFILE.value + '_test_results.txt',
-      np.stack((ls_results, sm_results)).T,
-      delimiter='\t',
-      header='lst_results\tsm_results',
-      comments='',
-      fmt='%.6e',
-  )
-  with open(OUTFILE.value + '_info.txt', 'w') as file:
-    file.write(f'{max_budget}\t')
-    file.write(f'{cor_coeff}\t')
-    file.write(f'{alpha}\t')
-  for var, name in zip([ls_results, sm_results, sm_results_new],
-                       ['ls', 'sm', 'sm_new']):
-    np.savetxt(OUTFILE.value + name + '.txt', var, comments='', fmt='%.6e')
+  if ADDITIONAL_OUTPUTS.value:
+    np.savetxt(
+        OUTFILE.value + '_test_results.txt',
+        np.stack((ls_results, sm_results)).T,
+        delimiter='\t',
+        header='lst_results\tsm_results',
+        comments='',
+        fmt='%.6e',
+    )
+    with open(OUTFILE.value + '_info.txt', 'w') as file:
+      file.write(f'{max_budget}\t')
+      file.write(f'{cor_coeff}\t')
+      file.write(f'{alpha}\t')
+    for var, name in zip([ls_results, sm_results, sm_results_new],
+                         ['ls', 'sm', 'sm_new']):
+      np.savetxt(OUTFILE.value + name + '.txt', var, comments='', fmt='%.6e')
 
 
 if __name__ == "__main__":
